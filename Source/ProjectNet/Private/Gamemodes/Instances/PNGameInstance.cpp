@@ -6,7 +6,9 @@
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "GameFramework/PlayerController.h"
 #include "OnlineSessionSettings.h"
+#include "Kismet/GameplayStatics.h"
 
 bool UPNGameInstance::Login()
 {
@@ -38,10 +40,7 @@ bool UPNGameInstance::Login()
 
 	//if (AuthType.IsEmpty()) 
 	//{
-		FOnlineAccountCredentials Credentials;
-		//Credentials.Id = "";
-		//Credentials.Token = "";
-		Credentials.Type = "accountportal";
+		FOnlineAccountCredentials Credentials("AccountPortal", "", "");
 		LoginSuccess = Identity->Login(0, Credentials);
 
 	//}
@@ -136,6 +135,7 @@ void UPNGameInstance::HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSu
 
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
 	if (bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Lobby: %s Created!"), *EOSLobbyName.ToString());
@@ -143,6 +143,14 @@ void UPNGameInstance::HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSu
 		TravelURL.Map = Map;
 		World->Listen(TravelURL);
 		SetupNotifications();
+
+		UE_LOG(LogTemp, Warning, TEXT("session num: %d"), Session->GetNumSessions());
+		FNamedOnlineSession* NamedSession = Session->GetNamedSession(EOSLobbyName);
+		if (NamedSession != nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("session num: %s"), *NamedSession->SessionName.ToString());
+		}
+
 	}
 	else
 	{
@@ -181,28 +189,34 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 	TSharedRef<FOnlineSessionSearch> Search = MakeShared<FOnlineSessionSearch>();
 
+	UE_LOG(LogTemp, Warning, TEXT("session num: %d"), Session->GetNumSessions());
+	FNamedOnlineSession* NamedSession = Session->GetNamedSession(SearchKey);
+	if (NamedSession != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("session num: %s"), *NamedSession->SessionName.ToString());
+	}
+	
+	// Remove the default search parameters that FOnlineSessionSearch sets up.
 	Search->QuerySettings.SearchParams.Empty();
 
-	Search->QuerySettings.Set(SearchKey, SearchValue, EOnlineComparisonOp::Equals);
-	Search->QuerySettings.Set("LOBBYSEARCH", true, EOnlineComparisonOp::Equals);
+	Search->QuerySettings.Set(SearchKey, SearchValue, EOnlineComparisonOp::Equals); 
 
+	//Search->QuerySettings.Set("LOBBIESSEARCH", true, EOnlineComparisonOp::Equals);
 	FindLobbiesDelegateHandle =
 		Session->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsCompleteDelegate::CreateUObject(
 			this,
 			&ThisClass::HandleFindLobbiesCompleted,
 			Search));
-
 	UE_LOG(LogTemp, Log, TEXT("Finding lobby."));
-
 
 	if (!Session->FindSessions(0, Search))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Finding lobby failed."));
+		// Clear our handle and reset the delegate. 
 		Session->ClearOnFindSessionsCompleteDelegate_Handle(FindLobbiesDelegateHandle);
 		FindLobbiesDelegateHandle.Reset();
 		return false;
 	}
-
 	return true;
 }
 
@@ -211,46 +225,44 @@ void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 
-	if (!bWasSuccessful)
+	if (bWasSuccessful)
+	{
+		// added code here to not run into issues when searching for sessions is succesfull, but the number of sessions is 0
+		if (Search->SearchResults.Num() == 0)
+		{
+			// If we're in P2P mode and we can't find a lobby on startup, create one. 
+			return;
+		}
+		UE_LOG(LogTemp, Log, TEXT("Found lobby."));
+		for (auto SessionInSearchResult : Search->SearchResults)
+		{
+			if (SessionInSearchResult.IsValid() == false)
+			{
+				continue;
+
+			}
+
+			//Ensure the connection string is resolvable and store the info in ConnectString and in SessionToJoin
+			if (Session->GetResolvedConnectString(SessionInSearchResult, NAME_GamePort, ConnectString))
+			{
+				LobbyToJoin = &SessionInSearchResult;
+			}
+
+			// For this course we will join the first session found automatically. Usually you would loop through all the sessions and determine which one is best to join. 
+			break;
+		}
+		JoinLobby();
+	}
+	else
 	{
 		UE_LOG(LogTemp, Log, TEXT("Find lobby failed."));
-		Session->ClearOnFindSessionsCompleteDelegate_Handle(FindLobbiesDelegateHandle);
-		FindLobbiesDelegateHandle.Reset();
-		return;
 	}
-	// added code here to not run into issues when searching for sessions is succesfull, but the number of sessions is 0
-	if (Search->SearchResults.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No such lobby"));
-		return;
-	}
-	UE_LOG(LogTemp, Log, TEXT("Found lobby."));
 
-
-	for (auto SessionInSearchResult : Search->SearchResults)
-	{
-		
-		if (SessionInSearchResult.IsValid() == false)
-		{
-			continue;
-		}
-
-		//Ensure the connection string is resolvable and store the info in ConnectString and in SessionToJoin
-		if (Session->GetResolvedConnectString(SessionInSearchResult, NAME_GamePort, ConnectString))
-		{
-			LobbyToJoin = &SessionInSearchResult;
-		}
-
-		break;
-	}
-	if (LobbyToJoin->IsValid() == false)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO lobby found"))
-	}
-	JoinLobby();
-
-
+	// Clear our handle and reset the delegate. 
+	Session->ClearOnFindSessionsCompleteDelegate_Handle(FindLobbiesDelegateHandle);
+	FindLobbiesDelegateHandle.Reset();
 }
+
 
 
 void UPNGameInstance::JoinLobby()
@@ -270,6 +282,8 @@ void UPNGameInstance::JoinLobby()
 	if (!Session->JoinSession(0, "SessionName", *LobbyToJoin))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Join Lobby failed."));
+
+		// Clear our handle and reset the delegate. 
 		Session->ClearOnJoinSessionCompleteDelegate_Handle(JoinLobbyDelegateHandle);
 		JoinLobbyDelegateHandle.Reset();
 	}
@@ -282,12 +296,12 @@ void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSession
 
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Joined lobby - %s"), *SessionName.ToString());
-		//ClientTravel(ConnectString, TRAVEL_Absolute);
-		
-		SetupNotifications();
+		UE_LOG(LogTemp, Log, TEXT("Joined lobby."));
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(ConnectString, TRAVEL_Absolute);
+		SetupNotifications(); // Setup our listeners for lobby event notifications
 	}
 
+	// Clear our handle and reset the delegate. 
 	Session->ClearOnJoinSessionCompleteDelegate_Handle(JoinLobbyDelegateHandle);
 	JoinLobbyDelegateHandle.Reset();
 }
