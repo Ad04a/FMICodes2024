@@ -44,5 +44,11 @@ void UHostSessionWidgetBase::BackClicked()
 
 void UHostSessionWidgetBase::CreateClicked()
 {
-	OnCreateClicked.Broadcast(SessionName->GetText().ToString());
+	if (OnCreateClicked.IsBound() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UHostSessionWidgetBase::CreateClicked OnCreateClicked.IsBound() == false"));
+		return;
+	}
+	FString Code = OnCreateClicked.Execute(FName(SessionName->GetText().ToString()));
+	SessionCode->SetText(FText::FromString(Code));
 }

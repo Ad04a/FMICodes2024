@@ -16,8 +16,11 @@ bool UPNGameInstance::Login()
 
 	FUniqueNetIdPtr NetId = Identity->GetUniquePlayerId(0);
 
+	Identity->Logout(0);
+
 	if (NetId != nullptr && Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Alredy logged in: %s"), *Identity->GetUniquePlayerId(0).Get()->ToString());
 		return true;
 	}
 
@@ -33,15 +36,20 @@ bool UPNGameInstance::Login()
 
 	bool LoginSuccess = false;
 
-	if (AuthType.IsEmpty()) 
-	{
-		FOnlineAccountCredentials Credentials("AccountPortal", "", "");
+	//if (AuthType.IsEmpty()) 
+	//{
+		FOnlineAccountCredentials Credentials;
+		//Credentials.Id = "";
+		//Credentials.Token = "";
+		Credentials.Type = "accountportal";
 		LoginSuccess = Identity->Login(0, Credentials);
-	}
-	else
-	{
-		LoginSuccess = Identity->AutoLogin(0);
-	}
+
+	//}
+	//else
+	//{
+	//	UE_LOG(Autologin)
+		//LoginSuccess = Identity->AutoLogin(0);
+	//}
 
 	
 	UE_LOG(LogTemp, Log, TEXT("Logging into EOS..."));
@@ -73,11 +81,18 @@ void UPNGameInstance::HandleLoginCompleted(int32 LocalUserNum, bool bWasSuccessf
 	LoginDelegateHandle.Reset();
 }
 
-void UPNGameInstance::CreateLobby(FName KeyName, FString KeyValue)
+FString UPNGameInstance::GenerateSessionCode()
+{
+	//Some generation
+	return FString("Some code");
+}
+
+FString UPNGameInstance::CreateLobby(FName KeyName)
 {
 
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	FString KeyValue = GenerateSessionCode();
 
 	CreateLobbyDelegateHandle =
 		Session->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(
@@ -100,10 +115,14 @@ void UPNGameInstance::CreateLobby(FName KeyName, FString KeyValue)
 
 	UE_LOG(LogTemp, Log, TEXT("Creating Lobby..."));
 
+	LobbyName = KeyName;
+
 	if (!Session->CreateSession(0, LobbyName, *SessionSettings))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to create Lobby!"));
+		return FString();
 	}
+	return KeyValue;
 }
 
 void UPNGameInstance::HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful)
@@ -156,7 +175,7 @@ void UPNGameInstance::HandleParticipantChanged(FName EOSLobbyName, const FUnique
 	}
 }
 
-void UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
+bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
@@ -181,7 +200,10 @@ void UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 		UE_LOG(LogTemp, Log, TEXT("Finding lobby failed."));
 		Session->ClearOnFindSessionsCompleteDelegate_Handle(FindLobbiesDelegateHandle);
 		FindLobbiesDelegateHandle.Reset();
+		return false;
 	}
+
+	return true;
 }
 
 void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef<FOnlineSessionSearch> Search)
@@ -199,7 +221,7 @@ void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef
 	// added code here to not run into issues when searching for sessions is succesfull, but the number of sessions is 0
 	if (Search->SearchResults.Num() == 0)
 	{
-		CreateLobby();
+		UE_LOG(LogTemp, Warning, TEXT("No such lobby"));
 		return;
 	}
 	UE_LOG(LogTemp, Log, TEXT("Found lobby."));
@@ -220,6 +242,10 @@ void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef
 		}
 
 		break;
+	}
+	if (LobbyToJoin->IsValid() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO lobby found"))
 	}
 	JoinLobby();
 
@@ -256,8 +282,9 @@ void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSession
 
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Joined lobby."));
+		UE_LOG(LogTemp, Log, TEXT("Joined lobby - %s"), *SessionName.ToString());
 		//ClientTravel(ConnectString, TRAVEL_Absolute);
+		
 		SetupNotifications();
 	}
 

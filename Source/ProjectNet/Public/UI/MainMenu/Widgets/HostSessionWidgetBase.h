@@ -12,6 +12,8 @@ class UEditableTextBox;
 class UScrollBox;
 class UTextBlock;
 
+DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(FString, FCreateSessionSignature, FName, Key);
+
 UCLASS()
 class PROJECTNET_API UHostSessionWidgetBase : public UUserWidget
 {
@@ -48,12 +50,11 @@ protected:
 	UFUNCTION()
 	void CreateClicked();
 
-
 public:
 	void NativeOnInitialized() override;
 	void NativeConstruct() override;
 
-	FButtonWithStringClicked OnCreateClicked;
+	FCreateSessionSignature OnCreateClicked;
 	FButtonClicked OnStartClicked;
 	FButtonClicked OnBackClicked;
 

@@ -22,14 +22,12 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 
 	//Delegate to bind callback event for login. 
 	FDelegateHandle LoginDelegateHandle;
-
 	FName LobbyName = "LobbyName";
 	FString Map = "Game/Content/StarterContent/Maps/StarterMap?listen";
 	FString ConnectString;
 	FOnlineSessionSearchResult* LobbyToJoin;
 
-	// Function to create an EOS session. 
-	void CreateLobby(FName KeyName = "KeyName", FString KeyValue = "KeyValue");
+	// Function to create an EOS session
 
 	void HandleCreateLobbyCompleted(FName LobbyName, bool bWasSuccessful);
 
@@ -40,7 +38,6 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 	void HandleParticipantChanged(FName EOSLobbyName, const FUniqueNetId& NetId, bool bJoined);
 
 
-	void FindLobbies(FName SearchKey, FString SearchValue);
 	void HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef<class FOnlineSessionSearch> Search);
 	FDelegateHandle FindLobbiesDelegateHandle;
 
@@ -48,9 +45,16 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 	void HandleJoinLobbyCompleted(FName LobbyName, EOnJoinSessionCompleteResult::Type Result);
 	FDelegateHandle JoinLobbyDelegateHandle;
 
+	FString GenerateSessionCode();
+
 public:
 
 	UFUNCTION()
 	bool Login();
 
+	UFUNCTION()
+	FString CreateLobby(FName KeyName);
+
+	UFUNCTION()
+	bool FindLobbies(FName SearchKey, FString SearchValue);
 };

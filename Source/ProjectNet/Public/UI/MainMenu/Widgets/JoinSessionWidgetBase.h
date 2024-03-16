@@ -11,12 +11,17 @@ class UEditableTextBox;
 class UButton;
 class UTextBlock;
 
+DECLARE_DYNAMIC_DELEGATE_RetVal_TwoParams(bool, FJoinSessionSignature, FName, Key, FString, Value);
+
 UCLASS()
 class PROJECTNET_API UJoinSessionWidgetBase : public UUserWidget
 {
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UEditableTextBox* SessionName;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	UEditableTextBox* SessionCode;
 
@@ -45,6 +50,6 @@ public:
 	void NativeOnInitialized() override;
 	void NativeConstruct() override;
 
-	FButtonWithStringClicked OnJoinClicked;
+	FJoinSessionSignature OnJoinClicked;
 	FButtonClicked OnBackClicked;
 };
