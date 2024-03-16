@@ -17,7 +17,7 @@ ABuilding::ABuilding()
 	{
 		StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Building Static Mesh Component"));
 		
-		for (int i = 1;i <= 3;i++)
+		for (int i = 1;i <= 4;i++)
 		{
 			FString MatPath = FString::Printf(TEXT("UMaterial'/Game/Assets/Materials/Building%dMaterial.Building%dMaterial'"), i, i);
 			UE_LOG(LogTemp, Warning, TEXT("%s"), *MatPath);
@@ -32,7 +32,7 @@ void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();	
 	if (!StaticMeshComponent) return;
-	int RandomIndex = FMath::RandRange(0, 2);
+	int RandomIndex = FMath::RandRange(0, 3);
 	UE_LOG(LogTemp, Warning, TEXT("TThis is randim id: %d"), RandomIndex);
 	StaticMeshComponent->SetMaterial(0, PossibleMaterials[RandomIndex]);
 }
