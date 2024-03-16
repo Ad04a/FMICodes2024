@@ -28,4 +28,13 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Materials")
 	TArray<UMaterial*> PossibleMaterials;
+
+	UPROPERTY(BlueprintReadOnly)
+	int SwitchCount;
+
+	UPROPERTY(BlueprintReadOnly)
+	int RouterCount;
+
+	UPROPERTY(BlueprintReadOnly)
+	int DecoderCount;
 };

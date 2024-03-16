@@ -2,13 +2,17 @@
 
 
 #include "Overworld/Actors/Building.h"
-#include <time.h>
+#include "Math/UnrealMathUtility.h"
 
 // Sets default values
 ABuilding::ABuilding()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	SwitchCount = FMath::RandRange(0, 3);
+	RouterCount = FMath::RandRange(0, 3);
+	DecoderCount = FMath::RandRange(0, 3);
+
 	if (!StaticMeshComponent)
 	{
 		StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Building Static Mesh Component"));
@@ -28,8 +32,7 @@ void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();	
 	if (!StaticMeshComponent) return;
-	srand(time(0));
-	int RandomIndex = rand() % 3;
+	int RandomIndex = FMath::RandRange(0, 2);
 	UE_LOG(LogTemp, Warning, TEXT("TThis is randim id: %d"), RandomIndex);
 	StaticMeshComponent->SetMaterial(0, PossibleMaterials[RandomIndex]);
 }
