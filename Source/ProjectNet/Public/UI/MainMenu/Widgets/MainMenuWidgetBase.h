@@ -9,6 +9,8 @@
 
 #include "MainMenuWidgetBase.generated.h"
 
+DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FLoginCompleteSignature);
+
 class UButton;
 
 UCLASS()
@@ -16,6 +18,9 @@ class PROJECTNET_API UMainMenuWidgetBase : public UUserWidget
 {
 	GENERATED_BODY()
 private:
+
+	UFUNCTION()
+	void OnLoginClicked();
 
 	UFUNCTION()
 	void OnJoinClicked();
@@ -29,6 +34,9 @@ private:
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
+	UButton* Login;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	UButton* Host;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
@@ -39,8 +47,12 @@ protected:
 
 
 	void NativeOnInitialized() override;
+	void NativeConstruct() override;
+	void SetPreLoginElementsVisible(bool State);
+	void SetPostLoginElementsVisible(bool State);
 
 public:
+	FLoginCompleteSignature LoginClicked;
 	FButtonClicked HostClicked;
 	FButtonClicked JoinClicked;
 	FButtonClicked QuitClicked;
