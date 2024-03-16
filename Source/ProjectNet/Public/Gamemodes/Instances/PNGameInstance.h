@@ -5,11 +5,9 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "VoiceChat.h"
 #include "PNGameInstance.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class PROJECTNET_API UPNGameInstance : public UGameInstance
 {
@@ -50,6 +48,12 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 public:
 
 	UFUNCTION()
+	void VoiceChatLogin();
+
+	//UFUNCTION(NetMulticast, Unreliable)
+	//void NotifyStartPlay();
+
+	UFUNCTION()
 	bool Login();
 
 	UFUNCTION()
@@ -57,4 +61,7 @@ public:
 
 	UFUNCTION()
 	bool FindLobbies(FName SearchKey, FString SearchValue);
+
+	//UFUNCTION()
+	//void OnLoginComplete(const FString PlayerName, const FVoiceChatResult& VoiceResult);
 };
