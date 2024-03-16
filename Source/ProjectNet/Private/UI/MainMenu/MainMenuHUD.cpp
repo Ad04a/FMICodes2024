@@ -6,6 +6,7 @@
 #include "UI/MainMenu/Widgets/HostSessionWidgetBase.h"
 #include "UI/MainMenu/Widgets/JoinSessionWidgetBase.h"
 #include "UI/MainMenu/Widgets/MainMenuWidgetBase.h"
+#include "Gamemodes/Instances/PNGameInstance.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
@@ -28,6 +29,12 @@ void AMainMenuHUD::BeginPlay()
 		return;
 	}*/
 
+	UPNGameInstance* GameInstance = Cast<UPNGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (IsValid(GameInstance) == false) {
+		UE_LOG(LogTemp, Error, TEXT("AMainMenuHUD::BeginPlay() IsValid(GameInstance) == false"));
+		return;
+	}
+
 	MainMenuWidget = CreateWidget<UMainMenuWidgetBase>(UGameplayStatics::GetGameInstance(World), MainMenuWidgetClass);
 	if (IsValid(MainMenuWidget) == false) {
 		UE_LOG(LogTemp, Error, TEXT("AMainMenuHUD::BeginPlay() IsValid(MainMenuWidget) == false"));
@@ -46,6 +53,7 @@ void AMainMenuHUD::BeginPlay()
 		return;
 	}
 
+	MainMenuWidget->LoginClicked.BindDynamic(GameInstance, &UPNGameInstance::Login);
 	MainMenuWidget->QuitClicked.AddDynamic(this, &AMainMenuHUD::ShowMenu);
 	MainMenuWidget->HostClicked.AddDynamic(this, &AMainMenuHUD::ShowHostSession);
 	MainMenuWidget->JoinClicked.AddDynamic(this, &AMainMenuHUD::ShowJoinSession);
