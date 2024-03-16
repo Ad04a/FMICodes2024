@@ -59,12 +59,12 @@ void AMainMenuHUD::BeginPlay()
 	MainMenuWidget->JoinClicked.AddDynamic(this, &AMainMenuHUD::ShowJoinSession);
 
 	//HostSessionWidget->OnCreateClicked.AddDynamic(GameMode, &AMainMenuModeBase::StartGame);
-	//HostSessionWidget->OnStartClicked.BindDynamic(this, &AMainMenuHUD::ShowMenu);
+	HostSessionWidget->OnCreateClicked.BindDynamic(GameInstance, &UPNGameInstance::CreateLobby);
 	HostSessionWidget->OnBackClicked.AddDynamic(this, &AMainMenuHUD::ShowMenu);
 
     
 	JoinSessionWidget->OnBackClicked.AddDynamic(this, &AMainMenuHUD::ShowMenu);
-	//JoinSessionWidget->OnJoinClicked.BindDynamic(GameMode, &AMainMenuModeBase::AddSave);
+	JoinSessionWidget->OnJoinClicked.BindDynamic(GameInstance, &UPNGameInstance::FindLobbies);
 	
 
 	PlayerOwner->bShowMouseCursor = true;

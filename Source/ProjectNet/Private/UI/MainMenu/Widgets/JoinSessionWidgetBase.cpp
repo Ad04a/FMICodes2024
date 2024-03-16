@@ -17,6 +17,7 @@ void UJoinSessionWidgetBase::NativeOnInitialized()
 void UJoinSessionWidgetBase::NativeConstruct()
 {
 	SessionCode->SetText(FText::FromString(""));
+	SessionName->SetText(FText::FromString(""));
 	ErrorText->SetText(FText::FromString(""));
 }
 
@@ -32,7 +33,12 @@ void UJoinSessionWidgetBase::MangeEnteredText(const FText& Text)
 
 void UJoinSessionWidgetBase::JoinClicked()
 {
-	OnJoinClicked.Broadcast(SessionCode->GetText().ToString());
+	if (OnJoinClicked.IsBound() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UJoinSessionWidgetBase::JoinClicked OnJoinClicked.IsBound() == false"));
+		return;
+	}
+	OnJoinClicked.Execute(FName(SessionName->GetText().ToString()), SessionCode->GetText().ToString());
 }
 
 
