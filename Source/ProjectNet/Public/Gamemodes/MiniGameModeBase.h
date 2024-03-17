@@ -48,4 +48,7 @@ public:
 
 	UFUNCTION()
 	void ConnectCable();
+
+	UFUNCTION()
+	void CompleteGameMode();
 };

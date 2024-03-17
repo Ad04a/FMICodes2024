@@ -67,4 +67,13 @@ void AMiniGameModeBase::StartPlay()
 void AMiniGameModeBase::ConnectCable()
 {
 	CablesConnected++;
+	if (CablesConnected >= CablesNeededForConnection)
+	{
+		CompleteGameMode();
+	}
+}
+
+void AMiniGameModeBase::CompleteGameMode()
+{
+	UE_LOG(LogTemp, Error, TEXT("all cables attached!"));
 }
