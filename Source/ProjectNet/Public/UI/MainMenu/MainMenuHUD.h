@@ -23,12 +23,6 @@ protected:
 	UMainMenuWidgetBase* MainMenuWidget;
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<UHostSessionWidgetBase> HostSessionWidgetClass;
-
-	UPROPERTY()
-	UHostSessionWidgetBase* HostSessionWidget;
-
-	UPROPERTY(EditAnywhere)
 	TSubclassOf<UJoinSessionWidgetBase> JoinSessionWidgetClass;
 
 	UPROPERTY()
@@ -38,13 +32,16 @@ protected:
 
 	virtual void BeginPlay()override;
 
+	UPROPERTY(EditAnywhere)
+	FName HostingLevel = "Hosting";
+
 public:
 
 	UFUNCTION()
-	void ShowMenu();
+	void BeginHost();
 
 	UFUNCTION()
-	void ShowHostSession();
+	void ShowMenu();
 
 	UFUNCTION()
 	void ShowJoinSession();

@@ -7,6 +7,18 @@
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
 
+void UHostSessionWidgetBase::SetVisibilityOfStart(bool State)
+{
+	if (!State)
+	{
+		StartButton->SetVisibility(ESlateVisibility::Collapsed);
+		CreateButton->SetVisibility(ESlateVisibility::Collapsed);
+		return;
+	}
+	StartButton->SetVisibility(ESlateVisibility::Visible);
+	CreateButton->SetVisibility(ESlateVisibility::Visible);
+}
+
 void UHostSessionWidgetBase::NativeOnInitialized()
 {
 	SessionName->OnTextChanged.AddDynamic(this, &UHostSessionWidgetBase::MangeEnteredText);

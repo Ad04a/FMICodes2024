@@ -21,7 +21,13 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 	//Delegate to bind callback event for login. 
 	FDelegateHandle LoginDelegateHandle;
 	FName LobbyName = "LobbyName";
-	FString Map = "Game/Content/StarterContent/Maps/StarterMap?listen";
+
+	UPROPERTY(EditAnywhere)
+	FString GameMap = "OverWorld";
+
+	UPROPERTY(EditAnywhere)
+	FString HostingMap = "Hosting";
+
 	FString ConnectString;
 	FOnlineSessionSearchResult* LobbyToJoin;
 
@@ -47,11 +53,7 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 
 public:
 
-	UFUNCTION()
-	void VoiceChatLogin();
-
-	//UFUNCTION(NetMulticast, Unreliable)
-	//void NotifyStartPlay();
+	FString HostingMode = "";
 
 	UFUNCTION()
 	bool Login();
@@ -62,6 +64,6 @@ public:
 	UFUNCTION()
 	bool FindLobbies(FName SearchKey, FString SearchValue);
 
-	//UFUNCTION()
-	//void OnLoginComplete(const FString PlayerName, const FVoiceChatResult& VoiceResult);
+	UFUNCTION()
+	void StartGame();
 };
