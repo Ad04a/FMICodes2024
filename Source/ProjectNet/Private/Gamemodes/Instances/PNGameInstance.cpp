@@ -165,6 +165,7 @@ void UPNGameInstance::HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSu
 		bool bIsInSession = Session->IsPlayerInSession(EOSLobbyName, *LocalPlayer->GetPreferredUniqueNetId());
 
 		UE_LOG(LogTemp, Log, TEXT("Is host in session %d"), bIsInSession);
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(FInputModeGameOnly());
 		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(GameMap, TRAVEL_Absolute);
 	}
 	else
@@ -264,6 +265,7 @@ void UPNGameInstance::StartGame()
 
 void UPNGameInstance::HandleStartLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful)
 {
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(FInputModeGameOnly());
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(GameMap, TRAVEL_Absolute);
 }
 
@@ -365,6 +367,7 @@ void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSession
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("Joined lobby."));
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(FInputModeGameOnly());
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(ConnectString, TRAVEL_Absolute);
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(GameMap, TRAVEL_Absolute);
 	// Clear our handle and reset the delegate. 
