@@ -29,6 +29,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Materials")
 	TArray<UMaterial*> PossibleMaterials;
 
+	UFUNCTION(BlueprintCallable)
+	void DrawLine();
+
 	UPROPERTY(BlueprintReadOnly)
 	int SwitchCount;
 
@@ -40,4 +43,10 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	bool IsInteractable;
+
+	UPROPERTY()
+	bool IsConnected;
+
+	UPROPERTY()
+	bool IsCentral;
 };
