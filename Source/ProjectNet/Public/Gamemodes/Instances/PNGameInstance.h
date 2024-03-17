@@ -5,11 +5,9 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "VoiceChat.h"
 #include "PNGameInstance.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class PROJECTNET_API UPNGameInstance : public UGameInstance
 {
@@ -23,13 +21,19 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 	//Delegate to bind callback event for login. 
 	FDelegateHandle LoginDelegateHandle;
 	FName LobbyName = "LobbyName";
-	FString Map = "Game/Content/StarterContent/Maps/StarterMap?listen";
+
+	UPROPERTY(EditAnywhere)
+	FString GameMap = "OverWorld";
+
+	UPROPERTY(EditAnywhere)
+	FString HostingMap = "Hosting";
+
 	FString ConnectString;
 	FOnlineSessionSearchResult* LobbyToJoin;
 
 	// Function to create an EOS session
 
-	void HandleCreateLobbyCompleted(FName LobbyName, bool bWasSuccessful);
+	void HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful);
 
 	FDelegateHandle CreateLobbyDelegateHandle;
 
@@ -45,9 +49,14 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 	void HandleJoinLobbyCompleted(FName LobbyName, EOnJoinSessionCompleteResult::Type Result);
 	FDelegateHandle JoinLobbyDelegateHandle;
 
+	FDelegateHandle StartLobbyDelegateHandle;
+	void HandleStartLobbyCompleted(FName LobbyName, bool bWasSuccessful);
+
 	FString GenerateSessionCode();
 
 public:
+
+	FString HostingMode = "";
 
 	UFUNCTION()
 	bool Login();
@@ -57,4 +66,7 @@ public:
 
 	UFUNCTION()
 	bool FindLobbies(FName SearchKey, FString SearchValue);
+
+	UFUNCTION()
+	void StartGame();
 };

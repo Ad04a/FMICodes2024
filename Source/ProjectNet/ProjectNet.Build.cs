@@ -8,7 +8,7 @@ public class ProjectNet : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsystemEOS", "OnlineSubsystem", "OnlineSubsystemUtils" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsystemEOS", "OnlineSubsystem", "OnlineSubsystemUtils", "VoiceChat" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

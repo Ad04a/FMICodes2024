@@ -22,7 +22,7 @@ bool UPNGameInstance::Login()
 
 	if (NetId != nullptr && Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Alredy logged in: %s"), *Identity->GetUniquePlayerId(0).Get()->ToString());
+		UE_LOG(LogTemp, Log, TEXT("Alredy logged in: %s"), *NetId->ToString());
 		return true;
 	}
 
@@ -62,7 +62,6 @@ bool UPNGameInstance::Login()
 	return LoginSuccess;
 }
 
-
 void UPNGameInstance::HandleLoginCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
@@ -80,6 +79,8 @@ void UPNGameInstance::HandleLoginCompleted(int32 LocalUserNum, bool bWasSuccessf
 	LoginDelegateHandle.Reset();
 }
 
+
+
 FString UPNGameInstance::GenerateSessionCode()
 {
 	//Some generation
@@ -91,8 +92,10 @@ FString UPNGameInstance::CreateLobby(FName KeyName)
 
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
-	FString KeyValue = GenerateSessionCode();
 
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+
+	FString KeyValue = GenerateSessionCode();
 	CreateLobbyDelegateHandle =
 		Session->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionCompleteDelegate::CreateUObject(
 			this,
@@ -101,26 +104,42 @@ FString UPNGameInstance::CreateLobby(FName KeyName)
 	TSharedRef<FOnlineSessionSettings> SessionSettings = MakeShared<FOnlineSessionSettings>();
 	SessionSettings->NumPublicConnections = 2; 
 	SessionSettings->bShouldAdvertise = true; 
-	SessionSettings->bUsesPresence = false;   
-	SessionSettings->bAllowJoinViaPresence = false;
+	SessionSettings->bUsesPresence = true;   
+	SessionSettings->bAllowJoinViaPresence = true;
 	SessionSettings->bAllowJoinViaPresenceFriendsOnly = false;
 	SessionSettings->bAllowInvites = false;    
 	SessionSettings->bAllowJoinInProgress = false; 
-	SessionSettings->bIsDedicated = false; 
+	SessionSettings->bIsDedicated = true; 
 	SessionSettings->bUseLobbiesIfAvailable = true; 
 	SessionSettings->bUseLobbiesVoiceChatIfAvailable = true; 
 	SessionSettings->bUsesStats = true; 
+	SessionSettings->bIsLANMatch = false;
 	SessionSettings->Settings.Add(KeyName, FOnlineSessionSetting((KeyValue), EOnlineDataAdvertisementType::ViaOnlineService));
 
 	UE_LOG(LogTemp, Log, TEXT("Creating Lobby..."));
 
 	LobbyName = KeyName;
 
-	if (!Session->CreateSession(0, LobbyName, *SessionSettings))
+	FUniqueNetIdRepl NetId = LocalPlayer->GetPreferredUniqueNetId();
+
+	if (NetId.IsValid() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NetId.IsValid() == false"));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Create lobby - net id: %s"), *NetId.GetUniqueNetId().Get()->ToString());
+
+	if (!Session->CreateSession(*NetId, LobbyName, *SessionSettings))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to create Lobby!"));
 		return FString();
 	}
+
+	StartLobbyDelegateHandle =
+		Session->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleStartLobbyCompleted));
+
 	return KeyValue;
 }
 
@@ -135,21 +154,17 @@ void UPNGameInstance::HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSu
 
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
-
+	
 	if (bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Lobby: %s Created!"), *EOSLobbyName.ToString());
-		FURL TravelURL;
-		TravelURL.Map = Map;
-		World->Listen(TravelURL);
 		SetupNotifications();
 
-		UE_LOG(LogTemp, Warning, TEXT("session num: %d"), Session->GetNumSessions());
-		FNamedOnlineSession* NamedSession = Session->GetNamedSession(EOSLobbyName);
-		if (NamedSession != nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("session num: %s"), *NamedSession->SessionName.ToString());
-		}
+
+		const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+		bool bIsInSession = Session->IsPlayerInSession(EOSLobbyName, *LocalPlayer->GetPreferredUniqueNetId());
+
+		UE_LOG(LogTemp, Log, TEXT("Is host in session %d"), bIsInSession);
 
 	}
 	else
@@ -165,7 +180,7 @@ void UPNGameInstance::SetupNotifications()
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
-
+	
 	Session->AddOnSessionParticipantsChangeDelegate_Handle(FOnSessionParticipantsChangeDelegate::CreateUObject(
 		this,
 		&ThisClass::HandleParticipantChanged));
@@ -189,6 +204,16 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 	TSharedRef<FOnlineSessionSearch> Search = MakeShared<FOnlineSessionSearch>();
 
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	FUniqueNetIdRepl NetId = LocalPlayer->GetPreferredUniqueNetId();
+
+	if (NetId.IsValid() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NetId.IsValid() == false"));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Find lobby - net id: %s"), *NetId.GetUniqueNetId().Get()->ToString());
+
 	UE_LOG(LogTemp, Warning, TEXT("session num: %d"), Session->GetNumSessions());
 	FNamedOnlineSession* NamedSession = Session->GetNamedSession(SearchKey);
 	if (NamedSession != nullptr)
@@ -198,8 +223,10 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 	
 	// Remove the default search parameters that FOnlineSessionSearch sets up.
 	Search->QuerySettings.SearchParams.Empty();
-
+	Search->MaxSearchResults = 5;
 	Search->QuerySettings.Set(SearchKey, SearchValue, EOnlineComparisonOp::Equals); 
+	Search->QuerySettings.Set(FName(TEXT("LOBBYSEARCH")), true, EOnlineComparisonOp::Equals);
+	
 
 	//Search->QuerySettings.Set("LOBBIESSEARCH", true, EOnlineComparisonOp::Equals);
 	FindLobbiesDelegateHandle =
@@ -209,7 +236,7 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 			Search));
 	UE_LOG(LogTemp, Log, TEXT("Finding lobby."));
 
-	if (!Session->FindSessions(0, Search))
+	if (!Session->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), Search))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Finding lobby failed."));
 		// Clear our handle and reset the delegate. 
@@ -218,6 +245,26 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 		return false;
 	}
 	return true;
+}
+
+void UPNGameInstance::StartGame()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	HostingMode = "";
+	UWorld* World = GetWorld();
+	if (IsValid(World) == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UPNGameInstance::StartGame IsValid(World) == false"));
+		return;
+	}
+	Session->StartSession(LobbyName);
+}
+
+void UPNGameInstance::HandleStartLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful)
+{
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(GameMap, TRAVEL_Absolute);
 }
 
 void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef<FOnlineSessionSearch> Search)
@@ -238,7 +285,7 @@ void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef
 		{
 			if (SessionInSearchResult.IsValid() == false)
 			{
-				continue;
+				//continue;
 
 			}
 
@@ -273,13 +320,23 @@ void UPNGameInstance::JoinLobby()
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	FUniqueNetIdRepl NetId = LocalPlayer->GetPreferredUniqueNetId();
+
+	if (NetId.IsValid() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NetId.IsValid() == false"));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Join lobby - net id: %s"), *NetId.GetUniqueNetId().Get()->ToString());
+
 	JoinLobbyDelegateHandle =
 		Session->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionCompleteDelegate::CreateUObject(
 			this,
 			&ThisClass::HandleJoinLobbyCompleted));
 
 	UE_LOG(LogTemp, Log, TEXT("Joining Lobby."));
-	if (!Session->JoinSession(0, "SessionName", *LobbyToJoin))
+	if (!Session->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), "SessionName", *LobbyToJoin))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Join Lobby failed."));
 
@@ -294,13 +351,22 @@ void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSession
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 
-	if (Result == EOnJoinSessionCompleteResult::Success)
+	StartLobbyDelegateHandle =
+		Session->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleStartLobbyCompleted));
+
+	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Joined lobby."));
-		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(ConnectString, TRAVEL_Absolute);
-		SetupNotifications(); // Setup our listeners for lobby event notifications
+		UE_LOG(LogTemp, Error, TEXT("Didnt join lobby"));
+		Session->ClearOnJoinSessionCompleteDelegate_Handle(JoinLobbyDelegateHandle);
+		JoinLobbyDelegateHandle.Reset();
+		return;
 	}
 
+	UE_LOG(LogTemp, Log, TEXT("Joined lobby."));
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(ConnectString, TRAVEL_Absolute);
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(HostingMap, TRAVEL_Absolute);
 	// Clear our handle and reset the delegate. 
 	Session->ClearOnJoinSessionCompleteDelegate_Handle(JoinLobbyDelegateHandle);
 	JoinLobbyDelegateHandle.Reset();

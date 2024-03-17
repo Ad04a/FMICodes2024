@@ -3,7 +3,6 @@
 
 #include "UI/MainMenu/MainMenuHUD.h"
 
-#include "UI/MainMenu/Widgets/HostSessionWidgetBase.h"
 #include "UI/MainMenu/Widgets/JoinSessionWidgetBase.h"
 #include "UI/MainMenu/Widgets/MainMenuWidgetBase.h"
 #include "Gamemodes/Instances/PNGameInstance.h"
@@ -41,26 +40,17 @@ void AMainMenuHUD::BeginPlay()
 		return;
 	}
 
-	HostSessionWidget = CreateWidget<UHostSessionWidgetBase>(UGameplayStatics::GetGameInstance(World), HostSessionWidgetClass);
-	if (IsValid(HostSessionWidget) == false) {
-		UE_LOG(LogTemp, Error, TEXT("AMainMenuHUD::BeginPlay() IsValid(HostSessionWidget) == false"));
-		return;
-	}
+
 
 	JoinSessionWidget = CreateWidget<UJoinSessionWidgetBase>(UGameplayStatics::GetGameInstance(World), JoinSessionWidgetClass);
 	if (IsValid(JoinSessionWidget) == false) {
 		UE_LOG(LogTemp, Error, TEXT("AMainMenuHUD::BeginPlay() IsValid(JoinSessionWidget) == false"));
 		return;
 	}
-
+	MainMenuWidget->HostClicked.AddDynamic(this, &AMainMenuHUD::BeginHost);
 	MainMenuWidget->LoginClicked.BindDynamic(GameInstance, &UPNGameInstance::Login);
 	MainMenuWidget->QuitClicked.AddDynamic(this, &AMainMenuHUD::ShowMenu);
-	MainMenuWidget->HostClicked.AddDynamic(this, &AMainMenuHUD::ShowHostSession);
 	MainMenuWidget->JoinClicked.AddDynamic(this, &AMainMenuHUD::ShowJoinSession);
-
-	//HostSessionWidget->OnCreateClicked.AddDynamic(GameMode, &AMainMenuModeBase::StartGame);
-	HostSessionWidget->OnCreateClicked.BindDynamic(GameInstance, &UPNGameInstance::CreateLobby);
-	HostSessionWidget->OnBackClicked.AddDynamic(this, &AMainMenuHUD::ShowMenu);
 
     
 	JoinSessionWidget->OnBackClicked.AddDynamic(this, &AMainMenuHUD::ShowMenu);
@@ -74,6 +64,23 @@ void AMainMenuHUD::BeginPlay()
 }
 
 
+void AMainMenuHUD::BeginHost()
+{
+	UWorld* World = GetWorld();
+	if (IsValid(World) == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AHostinHUD::BackToLobby() IsValid(World) == false"));
+		return;
+	}
+	UPNGameInstance* GameInstance = Cast<UPNGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (IsValid(GameInstance) == false) {
+		UE_LOG(LogTemp, Error, TEXT("AMainMenuHUD::BeginHost() IsValid(GameInstance) == false"));
+		return;
+	}
+	GameInstance->HostingMode = "Host";
+	UGameplayStatics::OpenLevel(World, HostingLevel);
+}
+
 void AMainMenuHUD::ShowMenu()
 {
 	if ((IsValid(PlayerOwner) && IsValid(MainMenuWidget)) == false) {
@@ -83,18 +90,6 @@ void AMainMenuHUD::ShowMenu()
 	Clear();
 
 	MainMenuWidget->AddToViewport();
-
-}
-
-void AMainMenuHUD::ShowHostSession()
-{
-	if ((IsValid(PlayerOwner) && IsValid(HostSessionWidget)) == false) {
-		return;
-	}
-
-	Clear();
-
-	HostSessionWidget->AddToViewport();
 
 }
 
