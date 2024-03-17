@@ -263,6 +263,29 @@ void UPNGameInstance::StartGame()
 	Session->StartSession(LobbyName);
 }
 
+void UPNGameInstance::ToggleVoiceChat(bool State)
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	TSharedRef<FOnlineSessionSettings> SessionSettings = MakeShared<FOnlineSessionSettings>();
+	SessionSettings->NumPublicConnections = 2;
+	SessionSettings->bShouldAdvertise = true;
+	SessionSettings->bUsesPresence = true;
+	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bAllowJoinViaPresenceFriendsOnly = false;
+	SessionSettings->bAllowInvites = false;
+	SessionSettings->bAllowJoinInProgress = false;
+	SessionSettings->bIsDedicated = true;
+	SessionSettings->bUseLobbiesIfAvailable = true;
+	SessionSettings->bUseLobbiesVoiceChatIfAvailable = State;
+	SessionSettings->bUsesStats = true;
+	SessionSettings->bIsLANMatch = false;
+
+	Session->UpdateSession(LobbyName, *SessionSettings, true);
+
+}
+
 void UPNGameInstance::HandleStartLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful)
 {
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(FInputModeGameOnly());
