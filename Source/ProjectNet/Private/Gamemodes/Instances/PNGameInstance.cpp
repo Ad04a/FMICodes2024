@@ -79,6 +79,8 @@ void UPNGameInstance::HandleLoginCompleted(int32 LocalUserNum, bool bWasSuccessf
 	LoginDelegateHandle.Reset();
 }
 
+
+
 FString UPNGameInstance::GenerateSessionCode()
 {
 	//Some generation
@@ -132,6 +134,11 @@ FString UPNGameInstance::CreateLobby(FName KeyName)
 		UE_LOG(LogTemp, Warning, TEXT("Failed to create Lobby!"));
 		return FString();
 	}
+
+	StartLobbyDelegateHandle =
+		Session->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleStartLobbyCompleted));
 
 	return KeyValue;
 }
@@ -242,6 +249,9 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 
 void UPNGameInstance::StartGame()
 {
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
 	HostingMode = "";
 	UWorld* World = GetWorld();
 	if (IsValid(World) == false)
@@ -249,9 +259,13 @@ void UPNGameInstance::StartGame()
 		UE_LOG(LogTemp, Error, TEXT("UPNGameInstance::StartGame IsValid(World) == false"));
 		return;
 	}
-	World->ServerTravel(GameMap);
+	Session->StartSession(LobbyName);
 }
 
+void UPNGameInstance::HandleStartLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful)
+{
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(GameMap, TRAVEL_Absolute);
+}
 
 void UPNGameInstance::HandleFindLobbiesCompleted(bool bWasSuccessful, TSharedRef<FOnlineSessionSearch> Search)
 {
@@ -336,6 +350,11 @@ void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSession
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	StartLobbyDelegateHandle =
+		Session->AddOnStartSessionCompleteDelegate_Handle(FOnStartSessionCompleteDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleStartLobbyCompleted));
 
 	if (Result != EOnJoinSessionCompleteResult::Success)
 	{

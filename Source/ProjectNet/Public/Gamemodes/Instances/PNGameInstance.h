@@ -33,7 +33,7 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 
 	// Function to create an EOS session
 
-	void HandleCreateLobbyCompleted(FName LobbyName, bool bWasSuccessful);
+	void HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSuccessful);
 
 	FDelegateHandle CreateLobbyDelegateHandle;
 
@@ -48,6 +48,9 @@ class PROJECTNET_API UPNGameInstance : public UGameInstance
 	void JoinLobby();
 	void HandleJoinLobbyCompleted(FName LobbyName, EOnJoinSessionCompleteResult::Type Result);
 	FDelegateHandle JoinLobbyDelegateHandle;
+
+	FDelegateHandle StartLobbyDelegateHandle;
+	void HandleStartLobbyCompleted(FName LobbyName, bool bWasSuccessful);
 
 	FString GenerateSessionCode();
 
