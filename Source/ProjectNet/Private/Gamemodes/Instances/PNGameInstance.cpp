@@ -9,31 +9,6 @@
 #include "GameFramework/PlayerController.h"
 #include "OnlineSessionSettings.h"
 #include "Kismet/GameplayStatics.h"
-#include "VoiceChat.h"
-
-void UPNGameInstance::VoiceChatLogin()
-{
-	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
-	IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
-	IVoiceChat* VoiceChatRef = IVoiceChat::Get();
-	IVoiceChatUser* VoiceChatUserRef = VoiceChatRef->CreateUser();
-	FUniqueNetIdPtr NetId = Identity->GetUniquePlayerId(0);
-	FPlatformUserId PlatformId = Identity->GetPlatformUserIdFromUniqueNetId(*NetId);
-	//VoiceChatUserRef->Login(PlatformId, NetId->ToString(), TEXT(""), FOnVoiceChatLoginCompletedDelegate::CreateUObject(this, &UPNGameInstance::OnLoginComplete));
-}
-
-/*void UPNGameInstance::OnLoginComplete(const FString PlayerName, const FVoiceChatResult& VoiceResult)
-{
-	if (!VoiceResult.IsSuccess())
-	{
-		UE_LOG(LogTemp, Error, TEXT("VoiceChat failed"));
-	}
-}*/
-
-/*void UPNGameInstance::NotifyStartPlay()
-{
-	UE_LOG(LogTemp, Error, TEXT("Cringe"));
-}*/
 
 bool UPNGameInstance::Login()
 {
@@ -86,7 +61,6 @@ bool UPNGameInstance::Login()
 	}
 	return LoginSuccess;
 }
-
 
 void UPNGameInstance::HandleLoginCompleted(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
@@ -177,9 +151,6 @@ void UPNGameInstance::HandleCreateLobbyCompleted(FName EOSLobbyName, bool bWasSu
 	if (bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Lobby: %s Created!"), *EOSLobbyName.ToString());
-		//FURL TravelURL;
-		//TravelURL.Map = Map;
-		//World->Listen(TravelURL);
 		SetupNotifications();
 
 
@@ -267,6 +238,18 @@ bool UPNGameInstance::FindLobbies(FName SearchKey, FString SearchValue)
 		return false;
 	}
 	return true;
+}
+
+void UPNGameInstance::StartGame()
+{
+	HostingMode = "";
+	UWorld* World = GetWorld();
+	if (IsValid(World) == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UPNGameInstance::StartGame IsValid(World) == false"));
+		return;
+	}
+	World->ServerTravel(GameMap);
 }
 
 
@@ -364,11 +347,7 @@ void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSession
 
 	UE_LOG(LogTemp, Log, TEXT("Joined lobby."));
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(ConnectString, TRAVEL_Absolute);
-	SetupNotifications(); // Setup our listeners for lobby event notifications
-	//SessionsSettings->bUseLobbiesVoiceChatIfAvailable();
-
-	//IVoiceChat* VCRef = IVoiceChat::Get();
-
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientTravel(HostingMap, TRAVEL_Absolute);
 	// Clear our handle and reset the delegate. 
 	Session->ClearOnJoinSessionCompleteDelegate_Handle(JoinLobbyDelegateHandle);
 	JoinLobbyDelegateHandle.Reset();

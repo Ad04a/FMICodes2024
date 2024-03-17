@@ -51,6 +51,9 @@ protected:
 	void CreateClicked();
 
 public:
+
+	void SetVisibilityOfStart(bool State);
+
 	void NativeOnInitialized() override;
 	void NativeConstruct() override;
 
