@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "Device.h"
 #include "Cable.h"
+#include "Kismet/GameplayStatics.h"
 #include "MiniGameModeBase.generated.h"
 
 /**
@@ -25,6 +26,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ADevice> SwitchClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ADevice> TVClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<ACable>> CableClasses;
