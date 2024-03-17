@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "Cable.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 // Sets default values
 ADevice::ADevice()
@@ -96,9 +97,9 @@ void ADevice::AttachCable(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		BoxComp->SetGenerateOverlapEvents(false);
 		AttachedCable->AttachToComponent(OverlappedComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("Socket"));
 		//AttachedCable->SetActorLocation(FVector(0,0, 10));
-			
-
-			AttachedCableEvent.Broadcast();
+		
+		UGameplayStatics::SpawnSound2D(GetWorld(), AttachedCableSound);
+		AttachedCableEvent.Broadcast();
 			
 	}
 	
