@@ -38,7 +38,7 @@ void ACable::Tick(float DeltaTime)
 		PlayerController->GetMousePosition(CurrentMousePositonX, CurrentMousePositonZ);
 		float DeltaX = CurrentMousePositonX - LastMousePositionX;
 		float DeltaY = CurrentMousePositonZ - LastMousePositionZ;
-		SetActorLocation(FVector(GetActorLocation().X - DeltaX, GetActorLocation().Y, GetActorLocation().Z - DeltaY));
+		SetActorLocation(FVector(GetActorLocation().X - DeltaX, GetActorLocation().Y - DeltaY, GetActorLocation().Z ));
 		LastMousePositionX = CurrentMousePositonX;
 		LastMousePositionZ = CurrentMousePositonZ;
 	}
