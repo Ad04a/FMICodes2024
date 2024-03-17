@@ -15,7 +15,7 @@ class PROJECTNET_API AOverWorldGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 public:
 	AOverWorldGameModeBase();
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite,EditAnywhere)
 	int IsConnecting;
 
 	UPROPERTY()
