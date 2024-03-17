@@ -282,6 +282,13 @@ void UPNGameInstance::ToggleVoiceChat(bool State)
 	SessionSettings->bUsesStats = true;
 	SessionSettings->bIsLANMatch = false;
 
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+
+	FUniqueNetIdRepl NetId = LocalPlayer->GetPreferredUniqueNetId();
+
+
+	State ? UGameplayStatics::GetPlayerController(GetWorld(), 0)->GameplayUnmutePlayer(NetId) : UGameplayStatics::GetPlayerController(GetWorld(), 0)->GameplayMutePlayer(NetId);
+
 	Session->UpdateSession(LobbyName, *SessionSettings, true);
 
 }
@@ -369,6 +376,9 @@ void UPNGameInstance::JoinLobby()
 		Session->ClearOnJoinSessionCompleteDelegate_Handle(JoinLobbyDelegateHandle);
 		JoinLobbyDelegateHandle.Reset();
 	}
+
+
+
 }
 
 void UPNGameInstance::HandleJoinLobbyCompleted(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
