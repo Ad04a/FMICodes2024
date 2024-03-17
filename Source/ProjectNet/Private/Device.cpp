@@ -74,10 +74,10 @@ void ADevice::AttachCable(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		UE_LOG(LogTemp, Warning, TEXT("ADevice::AttachCable::AttachedCable == nullptr"));
 		return;
 	}
-	UBoxComponent* Socket = Cast<UBoxComponent>(OverlappedComponent);
-	if (Socket == nullptr)
+	UBoxComponent* BoxComp = Cast<UBoxComponent>(OverlappedComponent);
+	if (BoxComp == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ADevice::AttachCable::Socket == nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("ADevice::AttachCable::BoxComp == nullptr"));
 		return;
 	}
 	/*FPort* AttachedPort = nullptr;
@@ -90,9 +90,18 @@ void ADevice::AttachCable(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		}
 	}
 	if (AttachedCable->Type == AttachedPort->Hole)*/
+	if(BoxComp->ComponentHasTag(AttachedCable->Mesh->ComponentTags[0]) && AttachedCable->bIsHeld)
+	{
+		AttachedCable->SetIsHeld(false);
+		BoxComp->SetGenerateOverlapEvents(false);
+		AttachedCable->AttachToComponent(OverlappedComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("Socket"));
+		//AttachedCable->SetActorLocation(FVector(0,0, 10));
+			
 
-	AttachedCable->AttachToComponent(OverlappedComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	AttachedCable->SetIsHeld(false);
+			AttachedCableEvent.Broadcast();
+			
+	}
+	
 	
 	
 }

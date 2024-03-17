@@ -7,6 +7,8 @@
 #include "Port.h"
 #include "Device.generated.h"
 
+UDELEGATE()
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCableAttachedSignature);
 
 UCLASS()
 class PROJECTNET_API ADevice : public AActor
@@ -23,7 +25,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	TArray<FPort> Ports;
 
-
+	UPROPERTY(EditAnywhere)
+	FCableAttachedSignature AttachedCableEvent;
 
 protected:
 	// Called when the game starts or when spawned
