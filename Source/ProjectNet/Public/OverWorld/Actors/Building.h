@@ -37,4 +37,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	int DecoderCount;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool IsInteractable;
 };

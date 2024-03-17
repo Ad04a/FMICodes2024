@@ -32,6 +32,7 @@ void ABuilding::BeginPlay()
 	Super::BeginPlay();	
 	if (!StaticMeshComponent) return;
 	int RandomIndex = FMath::RandRange(0, 12);
+	IsInteractable = RandomIndex < 7;
 	UE_LOG(LogTemp, Warning, TEXT("TThis is randim id: %d"), RandomIndex);
 	StaticMeshComponent->SetMaterial(0, PossibleMaterials[RandomIndex]);
 }
