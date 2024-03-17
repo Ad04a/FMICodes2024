@@ -19,5 +19,6 @@ public:
 	UPROPERTY()
 	int SpawnedBuildingsCount = 0;
 
+
 	virtual void HandleBeginPlay() override;
 };
