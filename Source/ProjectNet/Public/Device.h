@@ -27,6 +27,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FCableAttachedSignature AttachedCableEvent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "sound")
+	class USoundBase* AttachedCableSound;
 
 protected:
 	// Called when the game starts or when spawned
