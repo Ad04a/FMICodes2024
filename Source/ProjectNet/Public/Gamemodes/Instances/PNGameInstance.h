@@ -69,4 +69,7 @@ public:
 
 	UFUNCTION()
 	void StartGame();
+
+	UFUNCTION(BlueprintCallable)
+	void ToggleVoiceChat(bool State);
 };
